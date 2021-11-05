@@ -1,0 +1,54 @@
+---
+- name: Copy CurrencyConverter.war file from ADOP to outer proxy
+  shell: scp -i pem ec2-user@10.10.2.67:/home/ec2-user/CurrencyConverter.war /home/ec2-user/
+
+- name: Check for existing tomcat container
+  shell: docker ps -aq --filter "name=tomcat"
+  register: tcexist
+
+- name: Remove the existing tomcat container
+  shell: docker stop tomcat && docker rm -f tomcat
+  when: tcexist.stdout
+
+- name: Create a new tomcat container
+  shell: docker run -it -d -p 8443:8080 --name tomcat --restart=always tomcat:7.0
+
+- name: Extract tomcat-users template
+  template:
+    src=templates/tomcat-users.xml
+    dest=/home/ec2-user/
+
+- name: Copy edited tomcat-users.xml file
+  shell: docker cp tomcat-users.xml tomcat:/usr/local/tomcat/conf/
+
+- name: Delete webapps folder inside tomcat container
+  shell: rm -rf tomcat:/usr/local/tomcat/webapps
+  
+- name:  Extract webapps.dist from tomcat
+  shell: docker cp tomcat:/usr/local/tomcat/webapps.dist .
+
+- name: Move webapps.dist contents to webapps new webapps folder
+  shell: mv -f webapps.dist webapps
+  
+- name: Copy webapps contents to tomcat container
+  shell: docker cp /home/ec2-user/webapps tomcat:/usr/local/tomcat/
+  
+- name: Delete existing webapps and webapps.dist in root
+  shell: rm -rf webapps
+
+- name: Extract tomcat-users template
+  template:
+    src=context.xml
+    dest=/home/ec2-user/
+
+- name: Copy edited context.xml to docker container's filesystem
+  shell: docker cp context.xml tomcat:/usr/local/tomcat/webapps/manager/META-INF/context.xml
+  
+- name: Restart tomcat container
+  shell: docker restart tomcat
+
+- name: Copy CurrencyConverter.war to tomcat container
+  shell: docker cp CurrencyConverter.war tomcat:/usr/local/tomcat/webapps
+  
+- name: Restart tomcat container
+  shell: docker restart tomcat

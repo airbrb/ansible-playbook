@@ -1,0 +1,12 @@
+---
+- name: Copy war file from Nexus docker
+  hosts: ADOP
+  become: true
+  roles:
+    - copy
+
+- name: Tomcat Deployment
+  hosts: OUTER
+  become: true
+  roles:
+    - create

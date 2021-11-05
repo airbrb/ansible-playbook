@@ -1,0 +1,6 @@
+---
+- name: Delete existing CurrencyConverter.war file in outer proxy
+  shell: rm -rf CurrencyConverter.war
+
+- name: Extract CurrencyConverter.war file from docker in ADOP
+  shell: docker cp 46f51f0a0d3d:/var/jenkins_home/jobs/Snapshot_Nexus/workspace/target/CurrencyConverter.war /home/ec2-user/CurrencyConverter.war
